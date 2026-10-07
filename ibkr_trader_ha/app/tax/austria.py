@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import csv
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import json
 from pathlib import Path
 import time
@@ -42,7 +42,7 @@ class AustrianTaxLedger:
         return True
 
     def report(self, year: int) -> dict[str, Any]:
-        start = datetime(year, 1, 1, tzinfo=timezone.utc).timestamp()
+        start = datetime(year, 1, 1, tzinfo=UTC).timestamp()
         end = datetime(year + 1, 1, 1, tzinfo=timezone.utc).timestamp()
         rows = self.db.query(
             "SELECT captured_at,payload_json FROM tax_events "
