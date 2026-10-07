@@ -96,9 +96,8 @@ class RiskEngine:
             )
             checks["shortable"] = shortable
 
-        if decision.leverage > 1:
-            checks["margin_data"] = margin is not None
-            if margin is not None:
+        if decision.leverage > 1 and margin is not None:
+            checks["margin_data"] = True
                 try:
                     init = D(str(margin.get("init_margin_change") or "0"))
                     available = portfolio.available_funds
@@ -112,6 +111,9 @@ class RiskEngine:
                     checks["equity_with_loan"] = True if eq_loan in (None, "") else D(str(eq_loan)) > 0
                 except Exception:
                     checks["margin_sufficient"] = False
+                    checks["margin_limit"] = False
+                    checks["maintenance_margin_limit"] = False
+                    checks["equity_with_loan"] = False
 
         failed = next((key for key, value in checks.items() if not value), None)
         return RiskResult(
