@@ -28,6 +28,10 @@ class FakeConfig:
     risk_max_leverage = 5
     max_market_data_age_seconds = 30
     max_spread_bps = 60
+    risk_max_margin_pct = 30
+    risk_max_sector_exposure_pct = 30
+    risk_max_currency_exposure_pct = 50
+    risk_max_correlation_exposure_pct = 30
 
 
 def test_discovery_analysis_decision_risk_learning_pipeline(equity) -> None:
