@@ -28,6 +28,7 @@ options:
   ibkr_connect_timeout_seconds: 20
   ibkr_request_timeout_seconds: 15
   ibkr_reconnect_max_seconds: 60
+  base_currency: "EUR"
   trading_mode: "paper"
   trading_enabled: false
   kill_switch: true
@@ -106,6 +107,7 @@ schema:
   ibkr_connect_timeout_seconds: int
   ibkr_request_timeout_seconds: int
   ibkr_reconnect_max_seconds: int
+  base_currency: str
   trading_mode: list(paper|live)
   trading_enabled: bool
   kill_switch: bool
