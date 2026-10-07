@@ -47,6 +47,6 @@ def test_option_strategy_requires_greeks(equity) -> None:
 def test_futures_use_multiplier_in_sizing(equity) -> None:
     futures = replace(equity, asset_class=AssetClass.FUTURES, contract=replace(equity.contract, multiplier=Decimal("50"), min_size=Decimal("1"), size_increment=Decimal("1")))
     from app.risk import PositionSizer
-    qty, notional = PositionSizer(0.5, 8, 3).size(futures, Decimal("100"), Decimal("1"), Decimal("10000"))
+    qty, notional = PositionSizer(0.5, 100, 100).size(futures, Decimal("100"), Decimal("1"), Decimal("500000"))
     assert qty >= 1
     assert notional % Decimal("50") == 0
