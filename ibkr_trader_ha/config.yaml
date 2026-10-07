@@ -1,0 +1,173 @@
+name: IBKR Trader HA
+version: 0.1.0
+slug: ibkr_trader_ha
+description: >-
+  Fully autonomous, auditierbarer Interactive-Brokers-Trader mit dynamischer
+  Multi-Asset-Discovery, Gemini, News, Portfolio-Risk, Margin, Leverage,
+  Short, Reconciliation, Learning und Home-Assistant-Sensoren.
+arch:
+  - amd64
+  - aarch64
+url: https://github.com/GerMorg/IBKR_Trader_HA
+startup: application
+boot: auto
+homeassistant: "2026.4.0"
+homeassistant_api: true
+hassio_role: default
+apparmor: true
+init: false
+map:
+  - type: addon_config
+    read_only: false
+
+options:
+  ibkr_host: "127.0.0.1"
+  ibkr_port: 4002
+  ibkr_client_id: 170
+  ibkr_account: ""
+  ibkr_connect_timeout_seconds: 20
+  ibkr_request_timeout_seconds: 15
+  ibkr_reconnect_max_seconds: 60
+  base_currency: "EUR"
+  trading_mode: "paper"
+  trading_enabled: false
+  kill_switch: true
+  require_what_if: true
+
+  asset_equities_enabled: true
+  asset_etfs_enabled: true
+  asset_fx_enabled: true
+  asset_futures_enabled: true
+  asset_options_enabled: true
+  asset_bonds_enabled: true
+  asset_funds_enabled: false
+  asset_structured_enabled: false
+
+  scan_interval_seconds: 300
+  scan_max_results_per_profile: 50
+  scan_profiles_per_cycle: 6
+  market_data_cache_seconds: 20
+  historical_cache_seconds: 900
+  max_deep_analysis_candidates: 30
+  max_option_underlyings: 5
+  max_option_contracts: 30
+  max_gemini_candidates: 12
+  max_orderbook_age_seconds: 15
+  max_market_data_age_seconds: 30
+  min_average_daily_notional_eur: 100000
+  max_spread_bps: 60
+
+  strategy_min_edge_bps: 25
+  strategy_min_confidence: 0.60
+  risk_per_trade_pct: 0.50
+  risk_max_position_pct: 8
+  risk_max_order_pct: 3
+  risk_max_gross_pct: 60
+  risk_max_net_pct: 40
+  risk_max_margin_pct: 30
+  risk_max_leverage: 5
+  risk_max_open_positions: 8
+  risk_daily_loss_pct: 2
+  risk_max_drawdown_pct: 6
+  risk_cash_reserve_pct: 20
+  risk_max_correlation_exposure_pct: 30
+  risk_max_sector_exposure_pct: 30
+  risk_max_currency_exposure_pct: 50
+  risk_max_orders_per_day: 12
+  execution_max_slippage_bps: 30
+  execution_timeout_seconds: 45
+  execution_max_reprices: 2
+
+  learning_enabled: true
+  learning_min_samples: 100
+  learning_validation_fraction: 0.30
+  learning_min_improvement: 0.01
+  learning_recalibration_hours: 24
+  learning_auto_promotion: true
+
+  news_enabled: true
+  news_refresh_minutes: 10
+  news_source_timeout_seconds: 10
+  gemini_enabled: true
+  gemini_api_key: ""
+  gemini_model: "gemini-2.5-flash"
+  gemini_timeout_seconds: 30
+
+  database_path: "/data/ibkr_trader.db"
+  tax_reporting_enabled: true
+  tax_report_directory: "/config/reports/tax"
+  sensors_enabled: true
+  log_file_enabled: true
+
+schema:
+  ibkr_host: str
+  ibkr_port: int
+  ibkr_client_id: int
+  ibkr_account: str
+  ibkr_connect_timeout_seconds: int
+  ibkr_request_timeout_seconds: int
+  ibkr_reconnect_max_seconds: int
+  base_currency: str
+  trading_mode: list(paper|live)
+  trading_enabled: bool
+  kill_switch: bool
+  require_what_if: bool
+  asset_equities_enabled: bool
+  asset_etfs_enabled: bool
+  asset_fx_enabled: bool
+  asset_futures_enabled: bool
+  asset_options_enabled: bool
+  asset_bonds_enabled: bool
+  asset_funds_enabled: bool
+  asset_structured_enabled: bool
+  scan_interval_seconds: int
+  scan_max_results_per_profile: int
+  scan_profiles_per_cycle: int
+  market_data_cache_seconds: int
+  historical_cache_seconds: int
+  max_deep_analysis_candidates: int
+  max_option_underlyings: int
+  max_option_contracts: int
+  max_gemini_candidates: int
+  max_orderbook_age_seconds: int
+  max_market_data_age_seconds: int
+  min_average_daily_notional_eur: float
+  max_spread_bps: float
+  strategy_min_edge_bps: float
+  strategy_min_confidence: float
+  risk_per_trade_pct: float
+  risk_max_position_pct: float
+  risk_max_order_pct: float
+  risk_max_gross_pct: float
+  risk_max_net_pct: float
+  risk_max_margin_pct: float
+  risk_max_leverage: float
+  risk_max_open_positions: int
+  risk_daily_loss_pct: float
+  risk_max_drawdown_pct: float
+  risk_cash_reserve_pct: float
+  risk_max_correlation_exposure_pct: float
+  risk_max_sector_exposure_pct: float
+  risk_max_currency_exposure_pct: float
+  risk_max_orders_per_day: int
+  execution_max_slippage_bps: float
+  execution_timeout_seconds: int
+  execution_max_reprices: int
+  learning_enabled: bool
+  learning_min_samples: int
+  learning_validation_fraction: float
+  learning_min_improvement: float
+  learning_recalibration_hours: int
+  learning_auto_promotion: bool
+  news_enabled: bool
+  news_refresh_minutes: int
+  news_source_timeout_seconds: int
+  gemini_enabled: bool
+  gemini_api_key: password
+  gemini_model: str
+  gemini_timeout_seconds: int
+  database_path: str
+  tax_reporting_enabled: bool
+  tax_report_directory: str
+  sensors_enabled: bool
+  log_file_enabled: bool

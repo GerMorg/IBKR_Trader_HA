@@ -1,0 +1,89 @@
+name: IBKR Trader HA CI
+
+on:
+  push:
+    branches:
+      - main
+      - "build/**"
+      - "feature/**"
+      - "fix/**"
+      - "rebuild/**"
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: ibkr_trader_ha
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ibkr_trader_ha/pyproject.toml
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install ".[dev]"
+      - run: ruff format app tests
+      - run: ruff format --check app tests
+      - run: ruff check app tests
+      - run: mypy app --ignore-missing-imports
+      - run: python -m pytest -q
+
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install ".[dev]"
+      - run: bandit -q -r app
+      - run: pip-audit
+
+  ha_structure:
+    name: Home Assistant structure
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pyyaml
+      - run: python scripts/validate_ha_app.py
+
+  compile:
+    name: Compile and imports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install .
+      - run: python -m compileall -q app tests
+      - run: |
+          python -c 'from app.main import build_runtime; from app.config import Config; r=build_runtime(Config.from_mapping({"database_path": ":memory:", "news_enabled": False, "gemini_enabled": False})); print(type(r).__name__)'
+      - run: |
+          python -c 'from app.config import Config; print(Config.from_mapping({}).trading_mode)'
+
+  container:
+    name: Container build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -f Dockerfile -t ibkr-trader-ha:ci .
