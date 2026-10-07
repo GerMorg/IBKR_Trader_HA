@@ -115,7 +115,10 @@ class Runtime:
             open_orders = self.ibkr.open_orders()
             self._reconcile_open_orders(open_orders)
             self.stage = RuntimeStage.ACCOUNT_RECONCILED
-            self.recovery.clear()
+            if self.recovery.required:
+                self.stage = RuntimeStage.RECOVERY_REQUIRED
+                self._publish()
+                return False
             self.stage = RuntimeStage.READY
             self._publish()
             self.audit.emit("STARTUP_READY", instruments=len(self.instruments), **discovery_stats)
@@ -132,7 +135,7 @@ class Runtime:
         self.cycle_id = f"cycle_{time.time_ns()}"
         self.stage = RuntimeStage.RUNNING
         blockers: list[str] = []
-        self.stats = {"discovered": 0, "candidates": 0, "analyzed": 0, "approved": 0, "blocked": 0, "traded": 0}
+        self.stats = {"discovered": 0, "candidates": 0, "analyzed": 0, "approved": 0, "blocked": 0, "submitted": 0, "filled": 0}
         self.db.start_cycle(self.cycle_id, digest_config(self.config.__dict__))
         self.audit.emit("CYCLE_START", cycle_id=self.cycle_id)
 
@@ -215,16 +218,20 @@ class Runtime:
 
             for decision, snap in decisions:
                 result = self.execution.execute(
-                    decision, snap, None, self._orders_today()
+                    decision, snap, None, self._orders_today(), cycle_id=self.cycle_id
                 )
                 self.learning.record_order(decision.decision_id, result)
                 state = str(result.get("state", ""))
-                if state in {OrderState.ACKNOWLEDGED.value, OrderState.LIVE.value, OrderState.PARTIALLY_FILLED.value, OrderState.FILLED.value}:
-                    self.stats["traded"] += 1
+                if state in {OrderState.SUBMITTING.value, OrderState.ACKNOWLEDGED.value, OrderState.LIVE.value, OrderState.PARTIALLY_FILLED.value, OrderState.FILLED.value}:
+                    self.stats["submitted"] += 1
+                if state == OrderState.FILLED.value:
+                    self.stats["filled"] += 1
                 elif state == "BLOCKED":
                     self.stats["blocked"] += 1
                     blockers.append(f"{decision.instrument.symbol}:{result.get('reason', 'ORDER_BLOCKED')}")
 
+            lifecycle = self.execution.reconcile()
+            self.audit.emit("ORDER_STATUS", "INFO", **lifecycle)
             self._reconcile_after_cycle()
             learning = self.learning.recalibrate()
             self.db.finish_cycle(self.cycle_id, "COMPLETED", ";".join(blockers[:5]))
@@ -283,6 +290,7 @@ class Runtime:
         executions = self.ibkr.executions()
         for execution in executions:
             self.tax.record_fill(execution)
+            self.audit.emit("EXECUTION", "INFO", execution_id=execution.get("execution_id"), broker_order_id=execution.get("order_id"))
         self.audit.emit("EXECUTION", "INFO", count=len(executions))
         positions = self.ibkr.positions()
         self.audit.emit("PORTFOLIO_RECONCILIATION", "INFO", positions=len(positions))
