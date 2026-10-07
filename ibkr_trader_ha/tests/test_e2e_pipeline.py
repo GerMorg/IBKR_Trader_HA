@@ -3,9 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 import time
 
-from app.domain.models import CapabilityProfile, Contract, Instrument, MarketSnapshot
-from app.domain.states import AssetClass
-from app.discovery import DiscoveryEngine
+from app.domain.models import MarketSnapshot
 from app.learning import LearningEngine
 from app.market import FeatureEngine, RegimeEngine
 from app.monitoring import AuditLogger
@@ -55,7 +53,6 @@ def test_discovery_analysis_decision_risk_learning_pipeline(equity) -> None:
         ),
     )
     assert decision is not None
-    from app.risk import RiskEngine
     decision = DecisionEngine.with_position(decision, Decimal("250"), Decimal("250"), Decimal("1"), False)
     risk = RiskEngine(FakeConfig()).evaluate(
         decision,
