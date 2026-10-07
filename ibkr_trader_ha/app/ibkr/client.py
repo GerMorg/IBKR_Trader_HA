@@ -19,6 +19,7 @@ class IBKRClient:
         port: int,
         client_id: int,
         account: str = "",
+        base_currency: str = "EUR",
         connect_timeout: float = 20.0,
         request_timeout: float = 15.0,
     ) -> None:
@@ -26,6 +27,7 @@ class IBKRClient:
         self.port = int(port)
         self.client_id = int(client_id)
         self.account = account
+        self.base_currency = str(base_currency).upper()
         self.connect_timeout = float(connect_timeout)
         self.request_timeout = float(request_timeout)
         self.app: Any = None
@@ -330,7 +332,7 @@ class IBKRClient:
                 "AvailableFunds,ExcessLiquidity,Leverage,DayTradesRemaining",
             )
             self._wait("account", req)
-            preferred = self._account_rows.get("BASE") or self._account_rows.get("EUR")
+            preferred = self._account_rows.get("BASE") or self._account_rows.get(self.base_currency)
             if preferred is None and self._account_rows:
                 preferred = next(iter(self._account_rows.values()))
             return dict(preferred or {})
