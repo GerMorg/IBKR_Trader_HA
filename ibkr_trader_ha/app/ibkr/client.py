@@ -170,6 +170,17 @@ class IBKRClient:
                     "exchange": str(execution.exchange),
                 }
 
+            def commissionReport(self, report: Any) -> None:
+                execution_id = str(getattr(report, "execId", "") or "")
+                if not execution_id:
+                    return
+                parent._executions.setdefault(execution_id, {})["commission"] = str(
+                    getattr(report, "commission", "")
+                )
+                parent._executions[execution_id]["commission_currency"] = str(
+                    getattr(report, "currency", "")
+                )
+
             def execDetailsEnd(self, reqId: int) -> None:
                 parent._event("executions", reqId).set()
 
