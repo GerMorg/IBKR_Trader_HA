@@ -74,8 +74,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m compileall -q app tests
-      - run: python -c "from app.main import build_runtime; from app.config import Config; r=build_runtime(Config.from_mapping({"database_path": ":memory:", "news_enabled": false, "gemini_enabled": false})); print(type(r).__name__)"
-      - run: python -c "from app.config import Config; print(Config.from_mapping({}).trading_mode)"
+      - run: |
+          python -c 'from app.main import build_runtime; from app.config import Config; r=build_runtime(Config.from_mapping({"database_path": ":memory:", "news_enabled": False, "gemini_enabled": False})); print(type(r).__name__)'
+      - run: |
+          python -c 'from app.config import Config; print(Config.from_mapping({}).trading_mode)'
 
   container:
     name: Container build
