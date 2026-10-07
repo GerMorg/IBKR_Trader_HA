@@ -25,9 +25,15 @@ class DiscoveryEngine:
         ("STK", "STK.US.MAJOR", "MOST_ACTIVE"),
         ("STK", "STK.US.MAJOR", "TOP_PERC_GAIN"),
         ("STK", "STK.US.MAJOR", "TOP_PERC_LOSE"),
+        ("STK", "STK.EU.MAJOR", "MOST_ACTIVE"),
+        ("STK", "STK.CA.MAJOR", "MOST_ACTIVE"),
+        ("STK", "STK.ASIA.MAJOR", "MOST_ACTIVE"),
+        ("STK", "STK.AU.MAJOR", "MOST_ACTIVE"),
         ("FUT", "FUT.US", "MOST_ACTIVE"),
+        ("FUT", "FUT.EU", "MOST_ACTIVE"),
         ("CASH", "CASH.IDEALPRO", "MOST_ACTIVE"),
         ("BOND", "BOND.US", "MOST_ACTIVE"),
+        ("STK", "STK.US.MAJOR", "HIGH_VS_52_WK_AVG_VOL"),
     )
 
     def __init__(self, ibkr: Any, config: Any) -> None:
