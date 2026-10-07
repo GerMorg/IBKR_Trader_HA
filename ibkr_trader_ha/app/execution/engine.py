@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 import json
+import time
 from typing import Any
 
 from app.domain.models import Decision, MarketSnapshot, idempotency_key
@@ -52,6 +53,8 @@ class ExecutionEngine:
             return {"state": "BLOCKED", "reason": "TRADING_DISABLED"}
         if self.config.trading_mode not in {"paper", "live"}:
             return {"state": "BLOCKED", "reason": "INVALID_TRADING_MODE"}
+        if self.config.trading_mode == "live" and not getattr(self.config, "ibkr_account", ""):
+            return {"state": "BLOCKED", "reason": "IBKR_ACCOUNT_REQUIRED"}
 
         notional = Decimal(str(decision.quantity_notional))
         if notional <= 0:
@@ -119,14 +122,13 @@ class ExecutionEngine:
                 )
                 return {"state": "BLOCKED", "reason": "WHAT_IF_FAILED"}
 
-            if decision.leverage > 1:
-                final_risk = self.risk.evaluate(
-                    decision, portfolio, market, margin_result, orders_today
-                )
-                self.db.risk_event(
-                    cycle_id, decision.instrument.contract.con_id, final_risk
-                )
-                if not final_risk.allowed:
+            final_risk = self.risk.evaluate(
+                decision, portfolio, market, margin_result, orders_today
+            )
+            self.db.risk_event(
+                cycle_id, decision.instrument.contract.con_id, final_risk
+            )
+            if not final_risk.allowed:
                     self.db.update_intent_state(intent.intent_id, OrderState.REJECTED.value)
                     return {
                         "state": "BLOCKED",
@@ -206,7 +208,7 @@ class ExecutionEngine:
             self.db.update_intent_state(str(row["intent_id"]), state.value)
             self.db.execute(
                 "UPDATE orders SET state=?,payload_json=?,updated_at=? WHERE broker_order_id=?",
-                (state.value, json.dumps(observed, default=str, sort_keys=True), __import__("time").time(), broker_id),
+                (state.value, json.dumps(observed, default=str, sort_keys=True), time.time(), broker_id),
             )
             counts[state.value] = counts.get(state.value, 0) + 1
         return counts
