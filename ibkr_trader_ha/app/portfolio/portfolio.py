@@ -11,14 +11,13 @@ D = Decimal
 
 
 class PortfolioEngine:
-    TAG_ALIASES = {
+    TAGS = {
         "equity": "NetLiquidation",
         "cash": "TotalCashValue",
         "buying_power": "BuyingPower",
         "available_funds": "AvailableFunds",
         "margin_used": "InitMarginReq",
         "maintenance_margin": "MaintMarginReq",
-        "gross": "GrossPositionValue",
     }
 
     def __init__(self, base_currency: str = "EUR") -> None:
@@ -42,7 +41,8 @@ class PortfolioEngine:
         previous_peak: D = D("0"),
     ) -> PortfolioState:
         state = PortfolioState(
-            account_id=str(account.get("AccountType", "")),
+            account_id=str(account.get("AccountId") or account.get("AccountType") or ""),
+            currency=self.base_currency,
             equity=self._d(account.get("NetLiquidation")),
             cash=self._d(account.get("TotalCashValue")),
             available_funds=self._d(account.get("AvailableFunds")),
@@ -50,26 +50,30 @@ class PortfolioEngine:
             margin_used=self._d(account.get("InitMarginReq")),
             maintenance_margin=self._d(account.get("MaintMarginReq")),
         )
-        state.positions = {}
         gross = D("0")
         net = D("0")
         for row in raw_positions:
             con_id = int(row.get("con_id", 0) or 0)
             inst = instruments.get(con_id)
-            snap = snapshots.get(con_id)
-            if not inst or snap is None:
+            if not inst:
                 continue
             qty = self._d(row.get("quantity"))
-            multiplier = inst.contract.multiplier if inst.contract.multiplier > 0 else D("1")
-            local_value = qty * snap.last * multiplier
-            value_eur = self.converter.to_base(local_value, inst.currency, self.base_currency, fx_rates)
-            state.positions[con_id] = value_eur
+            state.positions[con_id] = qty
             state.position_currency[con_id] = inst.currency
             state.position_asset_class[con_id] = inst.asset_class
             state.position_sector[con_id] = inst.sector
+
+            snap = snapshots.get(con_id)
+            mark = snap.last if snap and snap.last > 0 else self._d(row.get("average_cost"))
+            multiplier = inst.contract.multiplier if inst.contract.multiplier > 0 else D("1")
+            local_value = qty * mark * multiplier
+            try:
+                value_eur = self.converter.to_base(local_value, inst.currency, self.base_currency, fx_rates)
+            except ValueError:
+                value_eur = local_value if inst.currency.upper() == self.base_currency.upper() else D("0")
             gross += abs(value_eur)
             net += value_eur
-        state.gross_exposure = gross if gross > 0 else max(D("0"), self._d(account.get("GrossPositionValue")))
+        state.gross_exposure = gross
         state.net_exposure = net
         state.peak_equity = max(previous_peak, state.equity)
         state.source_timestamp = __import__("time").time()
