@@ -446,12 +446,12 @@ class IBKRClient:
             self._events.pop(("history", req), None)
             self._history.pop(req, None)
 
-    def option_chain(self, underlying_con_id: int, symbol: str) -> list[dict[str, Any]]:
+    def option_chain(self, underlying_con_id: int, symbol: str, underlying_sec_type: str = "STK") -> list[dict[str, Any]]:
         self._require()
         req = self._next_req()
         self._option_chains[req] = []
         try:
-            self.app.reqSecDefOptParams(req, symbol, "", "STK", int(underlying_con_id))
+            self.app.reqSecDefOptParams(req, symbol, "", underlying_sec_type, int(underlying_con_id))
             self._wait("options", req)
             return list(self._option_chains[req])
         finally:
