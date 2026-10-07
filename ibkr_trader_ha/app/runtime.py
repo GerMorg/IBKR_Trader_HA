@@ -539,24 +539,66 @@ class Runtime:
             if decision.action == DecisionAction.LONG
             else snapshot.bid
         )
-        _, target_notional = self.sizing.size(
+        quantity, target_notional = self.sizing.size(
             decision.instrument,
             price,
             features.get("volatility", Decimal("5")),
             self.portfolio.equity,
         )
+        if quantity <= 0 or target_notional <= 0:
+            return self.decisions.with_position(
+                decision,
+                decision.current_position,
+                Decimal("0"),
+                Decimal("1"),
+                True,
+            )
+
         leverage = self.leverage.choose(
             decision.instrument,
             decision.signal.confidence,
             features.get("volatility", Decimal("5")),
             Decimal(str(self.config.risk_max_leverage)),
         )
-        target = (
+        desired_target = (
             target_notional
             if decision.action == DecisionAction.LONG
             else -target_notional
         )
-        delta = abs(target - decision.current_position)
+        desired_delta = abs(desired_target - decision.current_position)
+        multiplier = (
+            decision.instrument.contract.multiplier
+            if decision.instrument.contract.multiplier > 0
+            else Decimal("1")
+        )
+        increment = (
+            decision.instrument.contract.size_increment
+            if decision.instrument.contract.size_increment > 0
+            else Decimal("1")
+        )
+        delta_quantity = (
+            desired_delta / (price * multiplier)
+            if price > 0
+            else Decimal("0")
+        )
+        delta_quantity = (
+            delta_quantity / increment
+        ).to_integral_value(rounding=ROUND_DOWN) * increment
+        if delta_quantity < decision.instrument.contract.min_size:
+            return self.decisions.with_position(
+                decision,
+                decision.current_position,
+                Decimal("0"),
+                leverage,
+                True,
+            )
+
+        actual_delta = delta_quantity * price * multiplier
+        if decision.action == DecisionAction.LONG:
+            target = decision.current_position + actual_delta
+        else:
+            target = decision.current_position - actual_delta
+
         same_long_reduce = (
             decision.current_position > 0
             and 0 <= target < decision.current_position
@@ -568,10 +610,11 @@ class Runtime:
         reduce_only = same_long_reduce or same_short_reduce
         if target == 0 and decision.current_position != 0:
             reduce_only = True
+
         return self.decisions.with_position(
             decision,
             target,
-            delta,
+            actual_delta,
             leverage,
             reduce_only,
         )
