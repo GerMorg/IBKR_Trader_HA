@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 import json
-import threading
 from typing import Any
 
 from pydantic import BaseModel, Field
