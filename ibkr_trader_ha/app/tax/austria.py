@@ -43,7 +43,7 @@ class AustrianTaxLedger:
 
     def report(self, year: int) -> dict[str, Any]:
         start = datetime(year, 1, 1, tzinfo=UTC).timestamp()
-        end = datetime(year + 1, 1, 1, tzinfo=timezone.utc).timestamp()
+        end = datetime(year + 1, 1, 1, tzinfo=UTC).timestamp()
         rows = self.db.query(
             "SELECT captured_at,payload_json FROM tax_events "
             "WHERE captured_at>=? AND captured_at<? ORDER BY captured_at",
