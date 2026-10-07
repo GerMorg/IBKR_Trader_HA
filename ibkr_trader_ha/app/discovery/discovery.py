@@ -5,6 +5,7 @@ from typing import Any
 
 from app.domain.models import CapabilityProfile, Contract, Instrument
 from app.domain.states import AssetClass
+from app.market.hours import is_liquid_now
 
 
 SEC_TO_ASSET = {
@@ -99,6 +100,7 @@ class DiscoveryEngine:
             min_size=cls._d(row.get("min_size"), "0"),
             trading_hours=str(row.get("trading_hours", "")),
             liquid_hours=str(row.get("liquid_hours", "")),
+            time_zone_id=str(row.get("time_zone_id", "UTC") or "UTC"),
             expiry=str(row.get("contract_month", "")),
             contract_month=str(row.get("contract_month", "")),
             strike=cls._d(row.get("strike"), "0") if sec in {"OPT", "FOP"} else None,
@@ -126,7 +128,7 @@ class DiscoveryEngine:
             market_data_available=True,
             historical_data_available=True,
             account_eligible=True,
-            tradable_now=True,
+            tradable_now=is_liquid_now(str(row.get("liquid_hours", "")), str(row.get("time_zone_id", "UTC") or "UTC")) if row.get("liquid_hours") else False,
             supported_by_strategy=asset in {
                 AssetClass.EQUITY, AssetClass.ETF, AssetClass.FX, AssetClass.FUTURES,
                 AssetClass.OPTION, AssetClass.FUTURES_OPTION, AssetClass.BOND, AssetClass.FUND
