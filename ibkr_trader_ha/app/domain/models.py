@@ -248,6 +248,8 @@ class PortfolioState:
     realized_pnl: Decimal = D("0")
     daily_pnl: Decimal = D("0")
     positions: dict[int, Decimal] = field(default_factory=dict)
+    position_quantities: dict[int, Decimal] = field(default_factory=dict)
+    valuation_complete: bool = True
     position_currency: dict[int, str] = field(default_factory=dict)
     position_asset_class: dict[int, AssetClass] = field(default_factory=dict)
     position_sector: dict[int, str] = field(default_factory=dict)
