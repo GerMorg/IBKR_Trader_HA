@@ -115,6 +115,7 @@ class MarketSnapshot:
     vega: Decimal | None = None
     rho: Decimal | None = None
     shortable_shares: Decimal | None = None
+    shortability: Decimal | None = None
     etf_nav: Decimal | None = None
     source: str = "IBKR"
 
