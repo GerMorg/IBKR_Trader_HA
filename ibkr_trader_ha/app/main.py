@@ -42,28 +42,61 @@ def build_runtime(config: Config | None = None) -> Runtime:
     strategies = StrategyDispatcher()
     decisions = DecisionEngine()
     risk = RiskEngine(cfg)
-    sizing = PositionSizer(cfg.risk_per_trade_pct, cfg.risk_max_position_pct, cfg.risk_max_order_pct)
+    sizing = PositionSizer(
+        cfg.risk_per_trade_pct,
+        cfg.risk_max_position_pct,
+        cfg.risk_max_order_pct,
+    )
     leverage = LeverageEngine()
     execution = ExecutionEngine(ibkr, db, risk, cfg, audit)
-    news = NewsEngine(db, cfg.news_refresh_minutes, cfg.news_source_timeout_seconds)
-    gemini = GeminiAnalyzer(cfg.gemini_api_key, cfg.gemini_model, cfg.gemini_enabled, cfg.gemini_timeout_seconds, audit)
+    news = NewsEngine(
+        db,
+        cfg.news_refresh_minutes,
+        cfg.news_source_timeout_seconds,
+    )
+    gemini = GeminiAnalyzer(
+        cfg.gemini_api_key,
+        cfg.gemini_model,
+        cfg.gemini_enabled,
+        cfg.gemini_timeout_seconds,
+        audit,
+    )
     learning = LearningEngine(db, cfg, audit)
     sensors = SensorPublisher(cfg.sensors_enabled)
     tax = AustrianTaxLedger(db, cfg.tax_report_directory)
     return Runtime(
-        cfg, db, audit, ibkr, discovery, market, portfolio, strategies,
-        decisions, risk, sizing, leverage, execution, news, gemini,
-        learning, sensors, recovery, tax,
+        cfg,
+        db,
+        audit,
+        ibkr,
+        discovery,
+        market,
+        portfolio,
+        strategies,
+        decisions,
+        risk,
+        sizing,
+        leverage,
+        execution,
+        news,
+        gemini,
+        learning,
+        sensors,
+        recovery,
+        tax,
     )
 
 
 def main() -> None:
     runtime = build_runtime()
-    if not runtime.startup():
-        while True:
-            time.sleep(60)
     next_cycle = time.monotonic()
     while True:
+        if runtime.stage != runtime.stage.READY:
+            runtime.startup()
+            if runtime.stage != runtime.stage.READY:
+                time.sleep(min(30, runtime.config.ibkr_reconnect_max_seconds))
+                continue
+
         runtime.run_cycle()
         next_cycle += runtime.config.scan_interval_seconds
         delay = next_cycle - time.monotonic()
