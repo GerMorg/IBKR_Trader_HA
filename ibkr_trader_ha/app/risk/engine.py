@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Any
 
 from app.domain.models import Decision, MarketSnapshot, PortfolioState, RiskResult
+from app.domain.states import DecisionAction
 
 D = Decimal
 
@@ -34,6 +35,7 @@ class RiskEngine:
         resulting_gross = portfolio.gross_exposure - abs(decision.current_position) + abs(decision.target_position)
         resulting_net = portfolio.net_exposure - decision.current_position + decision.target_position
         eq = portfolio.equity
+        is_reduce = decision.reduce_only or decision.action in {DecisionAction.EXIT, DecisionAction.REBALANCE}
 
         checks = {
             "positive_equity": eq > 0,
@@ -49,12 +51,13 @@ class RiskEngine:
             "order_limit": abs(desired_delta) <= eq * D(str(self.config.risk_max_order_pct)) / D("100") if eq > 0 else False,
             "gross_limit": resulting_gross <= eq * D(str(self.config.risk_max_gross_pct)) / D("100") if eq > 0 else False,
             "net_limit": abs(resulting_net) <= eq * D(str(self.config.risk_max_net_pct)) / D("100") if eq > 0 else False,
-            "cash_reserve": portfolio.cash >= eq * D(str(self.config.risk_cash_reserve_pct)) / D("100") if desired_delta > 0 else True,
+            "portfolio_valuation": portfolio.valuation_complete or is_reduce,
+            "cash_reserve": portfolio.available_funds >= eq * D(str(self.config.risk_cash_reserve_pct)) / D("100") if desired_delta > 0 and not is_reduce else True,
             "open_position_limit": decision.current_position != 0 or len(portfolio.positions) < self.config.risk_max_open_positions,
             "orders_per_day": orders_today < self.config.risk_max_orders_per_day,
             "leverage": decision.leverage <= min(self.SAFETY_MAX_LEVERAGE, D(str(self.config.risk_max_leverage))),
-            "edge": decision.reduce_only or decision.signal.net_edge_bps >= D(str(self.config.strategy_min_edge_bps)),
-            "confidence": decision.reduce_only or decision.signal.confidence >= D(str(self.config.strategy_min_confidence)),
+            "edge": is_reduce or decision.signal.net_edge_bps >= D(str(self.config.strategy_min_edge_bps)),
+            "confidence": is_reduce or decision.signal.confidence >= D(str(self.config.strategy_min_confidence)),
         }
 
         if short and not decision.reduce_only:
