@@ -21,12 +21,17 @@ class OrderTranslator:
         if order_type not in cls.SUPPORTED:
             raise ValueError(f"UNSUPPORTED_ORDER_TYPE:{order_type}")
         price = intent.limit_price
+        raw_quantity = Decimal(str(intent.quantity))
+        increment = instrument.contract.size_increment
+        quantity = raw_quantity if increment <= 0 else (raw_quantity / increment).to_integral_value(rounding=ROUND_DOWN) * increment
+        if quantity < instrument.contract.min_size:
+            raise ValueError("QUANTITY_BELOW_MINIMUM")
         if price is not None:
             price = cls.round_price(price, instrument.contract.min_tick)
         return {
             "side": intent.side,
             "order_type": order_type,
-            "quantity": intent.quantity,
+            "quantity": quantity,
             "limit_price": price,
             "stop_price": intent.stop_price,
             "order_ref": intent.idempotency_key,
