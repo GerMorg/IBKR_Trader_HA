@@ -185,7 +185,7 @@ class Config:
         return cfg
 
     @classmethod
-    def load(cls, path: str = "/data/options.json") -> "Config":
+    def load(cls, path: str = "/data/options.json") -> Config:
         try:
             raw = json.loads(Path(path).read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
