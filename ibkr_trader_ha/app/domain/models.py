@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from hashlib import sha256
 import json
@@ -291,4 +291,4 @@ def digest_config(value: object) -> str:
 
 
 def utc_iso(ts: float | None = None) -> str:
-    return datetime.fromtimestamp(ts or time.time(), timezone.utc).isoformat()
+    return datetime.fromtimestamp(ts or time.time(), UTC).isoformat()
