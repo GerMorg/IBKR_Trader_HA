@@ -33,6 +33,7 @@ class DiscoveryEngine:
         self.ibkr = ibkr
         self.config = config
         self._profile_index = 0
+        self.last_errors: list[str] = []
 
     def discover(self) -> tuple[list[Instrument], dict[str, int]]:
         enabled = {
@@ -51,8 +52,8 @@ class DiscoveryEngine:
             self._profile_index += 1
             try:
                 rows.extend(self.ibkr.scanner(*profile, rows=self.config.scan_max_results_per_profile))
-            except Exception:
-                continue
+            except Exception as exc:
+                self.last_errors.append(f"{type(exc).__name__}:{str(exc)[:160]}")
         unique: dict[int, dict[str, Any]] = {}
         for row in rows:
             con_id = int(row.get("con_id", 0) or 0)
