@@ -3,7 +3,7 @@ import pytest
 
 from app.execution import OrderTranslator
 from app.domain.models import OrderIntent
-from app.domain.states import DecisionAction, OrderState
+from app.domain.states import DecisionAction
 
 
 def test_tick_rounding() -> None:
