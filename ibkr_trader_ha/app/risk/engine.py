@@ -98,22 +98,24 @@ class RiskEngine:
 
         if decision.leverage > 1 and margin is not None:
             checks["margin_data"] = True
-                try:
-                    init = D(str(margin.get("init_margin_change") or "0"))
-                    available = portfolio.available_funds
-                    maint = D(str(margin.get("maint_margin_change") or "0"))
-                    eq_loan = margin.get("equity_with_loan_value")
-                    projected_init = portfolio.margin_used + max(D("0"), init)
-                    projected_maint = portfolio.maintenance_margin + max(D("0"), maint)
-                    checks["margin_sufficient"] = init <= 0 or available >= init
-                    checks["margin_limit"] = projected_init <= margin_limit
-                    checks["maintenance_margin_limit"] = projected_maint <= margin_limit
-                    checks["equity_with_loan"] = True if eq_loan in (None, "") else D(str(eq_loan)) > 0
-                except Exception:
-                    checks["margin_sufficient"] = False
-                    checks["margin_limit"] = False
-                    checks["maintenance_margin_limit"] = False
-                    checks["equity_with_loan"] = False
+            try:
+                init = D(str(margin.get("init_margin_change") or "0"))
+                available = portfolio.available_funds
+                maint = D(str(margin.get("maint_margin_change") or "0"))
+                eq_loan = margin.get("equity_with_loan_value")
+                projected_init = portfolio.margin_used + max(D("0"), init)
+                projected_maint = portfolio.maintenance_margin + max(D("0"), maint)
+                checks["margin_sufficient"] = init <= 0 or available >= init
+                checks["margin_limit"] = projected_init <= margin_limit
+                checks["maintenance_margin_limit"] = projected_maint <= margin_limit
+                checks["equity_with_loan"] = (
+                    True if eq_loan in (None, "") else D(str(eq_loan)) > 0
+                )
+            except Exception:
+                checks["margin_sufficient"] = False
+                checks["margin_limit"] = False
+                checks["maintenance_margin_limit"] = False
+                checks["equity_with_loan"] = False
 
         failed = next((key for key, value in checks.items() if not value), None)
         return RiskResult(
