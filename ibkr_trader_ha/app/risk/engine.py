@@ -49,7 +49,10 @@ class RiskEngine:
         currency_exposure = sum(
             abs(value) for con_id, value in portfolio.positions.items()
             if portfolio.position_currency.get(con_id, "") == instrument.currency
-        ) + (abs(decision.target_position) if instrument.currency else D("0"))
+        )
+        if instrument.currency:
+            currency_exposure -= abs(decision.current_position)
+            currency_exposure += abs(decision.target_position)
         currency_limit = eq * D(str(self.config.risk_max_currency_exposure_pct)) / D("100") if eq > 0 else D("0")
 
         correlation_proxy = sector_exposure
@@ -60,7 +63,7 @@ class RiskEngine:
             "direction_capability": direction_allowed,
             "account_eligible": instrument.capability.account_eligible,
             "tradable_now": instrument.capability.tradable_now,
-            "market_hours": bool(instrument.contract.liquid_hours and is_liquid_now(instrument.contract.liquid_hours, instrument.contract.time_zone_id)) if instrument.contract.liquid_hours else False,
+            "market_hours": is_liquid_now(instrument.contract.liquid_hours, instrument.contract.time_zone_id) if instrument.contract.liquid_hours else True,
             "market_data": market.age_seconds <= self.config.max_market_data_age_seconds and market.last > 0,
             "spread": market.spread_bps <= D(str(self.config.max_spread_bps)),
             "data_quality": market.bid > 0 and market.ask > 0,
