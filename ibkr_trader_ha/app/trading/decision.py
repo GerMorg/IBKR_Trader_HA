@@ -12,7 +12,7 @@ D = Decimal
 class DecisionEngine:
     VERSION = "decision-v1"
 
-    def select(self, instrument: Instrument, long_signal: Signal, short_signal: Signal, portfolio: PortfolioState, model_scale: D = D("1")) -> Decision | None:
+    def select(self, instrument: Instrument, long_signal: Signal, short_signal: Signal, portfolio: PortfolioState, model_scale: D = Decimal("1")) -> Decision | None:
         current = portfolio.positions.get(instrument.contract.con_id, D("0"))
         candidates = [
             signal for signal in (long_signal, short_signal)
