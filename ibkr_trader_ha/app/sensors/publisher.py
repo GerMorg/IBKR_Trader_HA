@@ -9,7 +9,9 @@ from typing import Any
 class SensorPublisher:
     def __init__(self, enabled: bool, supervisor_token: str | None = None) -> None:
         self.enabled = enabled
-        self.supervisor_token = supervisor_token or os.getenv("SUPERVISOR_TOKEN", "")
+        self.supervisor_token = supervisor_token or os.getenv(
+            "SUPERVISOR_TOKEN", ""
+        )
         self.last_state: dict[str, Any] = {}
 
     def publish(self, values: dict[str, Any]) -> dict[str, Any]:
@@ -53,10 +55,14 @@ class SensorPublisher:
             "positions": values.get("positions", "0"),
             "cycle": values.get("cycle", ""),
             "discovered": values.get("discovered", "0"),
+            "data_ready": values.get("data_ready", "0"),
             "candidates": values.get("candidates", "0"),
             "analyzed": values.get("analyzed", "0"),
+            "decision_ready": values.get("decision_ready", "0"),
             "approved": values.get("approved", "0"),
             "blocked": values.get("blocked", "0"),
+            "submitted": values.get("submitted", "0"),
+            "filled": values.get("filled", "0"),
             "last_order": values.get("last_order", ""),
             "risk": values.get("risk", "UNKNOWN"),
             "regime": values.get("regime", "UNKNOWN"),
