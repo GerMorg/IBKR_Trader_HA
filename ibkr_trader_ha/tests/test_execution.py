@@ -3,7 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from app.config import Config
-from app.domain.models import Decision, MarketSnapshot, PortfolioState, Signal
+from app.domain.models import Decision, PortfolioState, Signal
 from app.domain.states import DecisionAction, OrderState
 from app.execution import ExecutionEngine
 from app.persistence import Database
