@@ -8,6 +8,7 @@ import pytest
 from app.config import Config
 from app.domain.models import CapabilityProfile, Contract, Instrument, MarketSnapshot
 from app.domain.states import AssetClass
+from app.monitoring import AuditLogger
 
 
 @pytest.fixture()
@@ -20,6 +21,11 @@ def config() -> Config:
         "news_enabled": False,
         "database_path": ":memory:",
     })
+
+
+@pytest.fixture()
+def audit() -> AuditLogger:
+    return AuditLogger(False)
 
 
 @pytest.fixture()
