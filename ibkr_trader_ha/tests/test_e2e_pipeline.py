@@ -69,4 +69,4 @@ def test_discovery_analysis_decision_risk_learning_pipeline(equity) -> None:
     db.save_decision("c1", decision)
     learner = LearningEngine(db, type("C", (), {"learning_enabled": True, "learning_min_samples": 100, "learning_validation_fraction": 0.3, "learning_min_improvement": 0.01, "learning_auto_promotion": True})(), AuditLogger(False))
     learner.record_decision(decision, "c1")
-    assert db.one("SELECT decision_id FROM learning_samples WHERE decision_id='d1'") is not None
+    assert db.one("SELECT decision_id FROM learning_samples WHERE decision_id=?", (decision.decision_id,)) is not None
