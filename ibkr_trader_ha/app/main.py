@@ -16,6 +16,7 @@ from app.portfolio import PortfolioEngine
 from app.recovery import RecoveryManager
 from app.risk import LeverageEngine, PositionSizer, RiskEngine
 from app.runtime import Runtime
+from app.domain.states import RuntimeStage
 from app.sensors import SensorPublisher
 from app.strategy import StrategyDispatcher
 from app.tax import AustrianTaxLedger
@@ -91,7 +92,7 @@ def main() -> None:
     runtime = build_runtime()
     next_cycle = time.monotonic()
     while True:
-        if runtime.stage != runtime.stage.READY:
+        if runtime.stage != RuntimeStage.READY:
             runtime.startup()
             if runtime.stage != runtime.stage.READY:
                 time.sleep(min(30, runtime.config.ibkr_reconnect_max_seconds))
