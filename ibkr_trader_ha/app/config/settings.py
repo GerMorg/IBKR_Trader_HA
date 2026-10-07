@@ -15,6 +15,7 @@ class Config:
     ibkr_connect_timeout_seconds: int
     ibkr_request_timeout_seconds: int
     ibkr_reconnect_max_seconds: int
+    base_currency: str
     trading_mode: str
     trading_enabled: bool
     kill_switch: bool
@@ -115,6 +116,7 @@ class Config:
             ibkr_connect_timeout_seconds=i("ibkr_connect_timeout_seconds", 20, 5),
             ibkr_request_timeout_seconds=i("ibkr_request_timeout_seconds", 15, 3),
             ibkr_reconnect_max_seconds=i("ibkr_reconnect_max_seconds", 60, 5),
+            base_currency=str(raw.get("base_currency", "EUR")).strip().upper() or "EUR",
             trading_mode=str(raw.get("trading_mode", "paper")).strip().lower(),
             trading_enabled=b("trading_enabled", False),
             kill_switch=b("kill_switch", True),
@@ -194,6 +196,10 @@ class Config:
     def validate(cfg: "Config") -> None:
         if cfg.trading_mode not in {"paper", "live"}:
             raise ValueError("trading_mode must be paper or live")
+        if len(cfg.base_currency) != 3 or not cfg.base_currency.isalpha():
+            raise ValueError("base_currency must be a 3-letter currency code")
+        if cfg.trading_mode == "live" and cfg.trading_enabled and not cfg.ibkr_account:
+            raise ValueError("ibkr_account is required for enabled live trading")
         if not cfg.ibkr_host:
             raise ValueError("ibkr_host must not be empty")
         if cfg.risk_max_net_pct > cfg.risk_max_gross_pct:
