@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 from app.domain.models import Instrument, MarketSnapshot
+from app.domain.states import AssetClass
 
 
 class MarketDataEngine:
@@ -61,7 +62,7 @@ class MarketDataEngine:
             vega=d("vega") if raw.get("vega") else None,
             rho=d("rho") if raw.get("rho") else None,
             shortable_shares=d("89") if raw.get("89") is not None else None,
-            etf_nav=d("232") if raw.get("232") is not None else None,
+            etf_nav=d("578") if raw.get("578") is not None else None,
         )
         self.cache[instrument.contract.con_id] = (time.time(), snapshot)
         return snapshot
@@ -78,7 +79,7 @@ class MarketDataEngine:
                 duration="30 D",
                 bar_size="1 hour",
                 what_to_show="TRADES",
-                use_rth=instrument.asset_class not in {instrument.asset_class.FX},
+                use_rth=instrument.asset_class != AssetClass.FX,
             )
         except Exception:
             bars = []
