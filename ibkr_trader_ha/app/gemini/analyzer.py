@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from decimal import Decimal
 import json
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from pydantic import BaseModel, Field
 
