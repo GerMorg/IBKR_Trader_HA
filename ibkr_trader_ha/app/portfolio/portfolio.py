@@ -31,7 +31,7 @@ class PortfolioEngine:
         instruments: dict[int, Instrument],
         snapshots: dict[int, MarketSnapshot],
         fx_rates: dict[str, D],
-        previous_peak: D = ZERO,
+        previous_peak: D | None = None,
     ) -> PortfolioState:
         state = PortfolioState(
             account_id=str(account.get("AccountId") or account.get("AccountType") or ""),
@@ -82,6 +82,6 @@ class PortfolioEngine:
         state.gross_exposure = gross
         state.net_exposure = net
         state.valuation_complete = complete
-        state.peak_equity = max(previous_peak, state.equity)
+        state.peak_equity = max(previous_peak or ZERO, state.equity)
         state.source_timestamp = time.time()
         return state
