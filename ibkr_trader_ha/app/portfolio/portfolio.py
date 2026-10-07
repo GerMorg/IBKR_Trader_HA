@@ -19,6 +19,8 @@ class PortfolioEngine:
 
     @staticmethod
     def _d(value: Any) -> D:
+        if value in (None, ""):
+            return D("0")
         try:
             return D(str(value))
         except (TypeError, ValueError):
