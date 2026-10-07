@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import replace
 from decimal import Decimal
-from typing import Any
 
 from app.domain.models import Decision, Instrument, PortfolioState, Signal, new_id
 from app.domain.states import DecisionAction
