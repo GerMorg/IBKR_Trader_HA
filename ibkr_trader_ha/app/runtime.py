@@ -149,7 +149,7 @@ class Runtime:
                 raw_positions,
                 self.instruments,
                 snapshots,
-                self._fx_rates({self.instruments[c] for c in held_ids if c in self.instruments}),
+                self._fx_rates([self.instruments[c] for c in held_ids if c in self.instruments]),
             )
             self.db.save_portfolio(self.portfolio)
 
@@ -296,7 +296,7 @@ class Runtime:
                 raw_positions,
                 self.instruments,
                 snapshots,
-                self._fx_rates(set(self.instruments.values())),
+                self._fx_rates([self.instruments[c] for c in held_ids if c in self.instruments]),
                 getattr(self.portfolio, "peak_equity", Decimal("0")),
             )
             self.db.save_portfolio(self.portfolio)
@@ -647,7 +647,7 @@ class Runtime:
             new_executions=new_count,
         )
 
-    def _fx_rates(self, instruments: set[Any]) -> dict[str, Decimal]:
+    def _fx_rates(self, instruments: list[Any]) -> dict[str, Decimal]:
         rates: dict[str, Decimal] = {}
         now = time.time()
         currencies = {
