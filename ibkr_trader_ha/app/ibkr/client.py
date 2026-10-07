@@ -34,7 +34,7 @@ class IBKRClient:
         self._req = 1000
         self._order_id = 0
         self._connected = threading.Event()
-        self._account: dict[str, str] = {}
+        self._account_rows: dict[str, dict[str, str]] = {}
         self._positions: dict[int, dict[str, Any]] = {}
         self._orders: dict[int, dict[str, Any]] = {}
         self._executions: dict[str, dict[str, Any]] = {}
@@ -84,7 +84,7 @@ class IBKRClient:
             def accountSummary(self, reqId: int, account: str, tag: str, value: str, currency: str) -> None:
                 if parent.account and account != parent.account:
                     return
-                parent._account[tag] = value
+                parent._account_rows.setdefault(str(currency).upper(), {})[tag] = value
 
             def accountSummaryEnd(self, reqId: int) -> None:
                 parent._event("account", reqId).set()
@@ -329,7 +329,10 @@ class IBKRClient:
                 "AvailableFunds,ExcessLiquidity,Leverage,DayTradesRemaining",
             )
             self._wait("account", req)
-            return dict(self._account)
+            preferred = self._account_rows.get("BASE") or self._account_rows.get("EUR")
+            if preferred is None and self._account_rows:
+                preferred = next(iter(self._account_rows.values()))
+            return dict(preferred or {})
         finally:
             try:
                 self.app.cancelAccountSummary(req)
