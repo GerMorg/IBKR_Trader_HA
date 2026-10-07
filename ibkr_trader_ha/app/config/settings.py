@@ -87,7 +87,7 @@ class Config:
     log_file_enabled: bool
 
     @classmethod
-    def from_mapping(cls, raw: dict[str, Any]) -> "Config":
+    def from_mapping(cls, raw: dict[str, Any]) -> Config:
         def b(name: str, default: bool) -> bool:
             value = raw.get(name, default)
             if isinstance(value, str):
@@ -193,7 +193,7 @@ class Config:
         return cls.from_mapping(raw)
 
     @staticmethod
-    def validate(cfg: "Config") -> None:
+    def validate(cfg: Config) -> None:
         if cfg.trading_mode not in {"paper", "live"}:
             raise ValueError("trading_mode must be paper or live")
         if len(cfg.base_currency) != 3 or not cfg.base_currency.isalpha():
