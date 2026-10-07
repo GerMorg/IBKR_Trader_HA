@@ -6,7 +6,7 @@ from typing import Any
 
 from app.config import Config
 from app.discovery import DiscoveryEngine
-from app.domain.models import digest_config
+from app.domain.models import PortfolioState, digest_config
 from app.domain.states import DecisionAction, OrderState, RuntimeStage
 from app.execution import ExecutionEngine
 from app.gemini import GeminiAnalyzer
@@ -72,7 +72,7 @@ class Runtime:
         self.stage = RuntimeStage.BOOT
         self.cycle_id = ""
         self.instruments: dict[int, Any] = {}
-        self.portfolio = None
+        self.portfolio: PortfolioState = PortfolioState(currency=self.config.base_currency)
         self.stats: dict[str, Any] = {}
         self._fx_cache: dict[str, tuple[float, Decimal]] = {}
 
@@ -170,7 +170,9 @@ class Runtime:
             self.audit.emit(
                 "STARTUP_READY",
                 instruments=len(self.instruments),
-                **discovery_stats,
+                discovered=discovery_stats["discovered"],
+                eligible=discovery_stats["eligible"],
+                unsupported=discovery_stats["unsupported"],
             )
             return True
         except Exception as exc:
