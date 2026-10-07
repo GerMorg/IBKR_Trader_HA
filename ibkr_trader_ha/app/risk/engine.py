@@ -43,6 +43,7 @@ class RiskEngine:
             if portfolio.position_sector.get(con_id, "") and portfolio.position_sector.get(con_id, "") == instrument.sector
         )
         if instrument.sector:
+            sector_exposure -= abs(decision.current_position)
             sector_exposure += abs(decision.target_position)
         sector_limit = eq * D(str(self.config.risk_max_sector_exposure_pct)) / D("100") if eq > 0 else D("0")
 
