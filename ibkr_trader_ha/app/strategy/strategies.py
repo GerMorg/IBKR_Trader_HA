@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Any
 
-from app.domain.models import Instrument, MarketSnapshot, NewsFeature, Signal
-from app.domain.states import AssetClass, DecisionAction
+from app.domain.models import Instrument, MarketSnapshot, Signal
+from app.domain.states import DecisionAction
 
 D = Decimal
 
