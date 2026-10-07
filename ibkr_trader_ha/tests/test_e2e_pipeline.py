@@ -8,7 +8,6 @@ from app.learning import LearningEngine
 from app.market import FeatureEngine, RegimeEngine
 from app.monitoring import AuditLogger
 from app.persistence import Database
-from app.risk import RiskEngine
 from app.strategy import StrategyDispatcher
 from app.trading import DecisionEngine
 
