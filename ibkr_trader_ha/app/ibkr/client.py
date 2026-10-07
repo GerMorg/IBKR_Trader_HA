@@ -271,6 +271,7 @@ class IBKRClient:
             "right": str(getattr(c, "right", "")),
             "trading_hours": str(getattr(details, "tradingHours", "")),
             "liquid_hours": str(getattr(details, "liquidHours", "")),
+            "time_zone_id": str(getattr(details, "timeZoneId", "UTC") or "UTC"),
             "order_types": str(getattr(details, "orderTypes", "")),
             "long_name": str(getattr(details, "longName", "")),
             "category": str(getattr(details, "category", "")),
