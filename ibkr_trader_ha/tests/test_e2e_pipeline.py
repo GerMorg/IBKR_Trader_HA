@@ -3,11 +3,12 @@ from __future__ import annotations
 from decimal import Decimal
 import time
 
-from app.domain.models import MarketSnapshot, PortfolioState
+from app.domain.models import MarketSnapshot
 from app.learning import LearningEngine
 from app.market import FeatureEngine, RegimeEngine
 from app.monitoring import AuditLogger
 from app.persistence import Database
+from app.risk import RiskEngine
 from app.strategy import StrategyDispatcher
 from app.trading import DecisionEngine
 
