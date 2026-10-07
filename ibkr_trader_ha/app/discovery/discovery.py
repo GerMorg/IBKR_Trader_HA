@@ -25,9 +25,9 @@ class DiscoveryEngine:
         ("STK", "STK.US.MAJOR", "MOST_ACTIVE"),
         ("STK", "STK.US.MAJOR", "TOP_PERC_GAIN"),
         ("STK", "STK.US.MAJOR", "TOP_PERC_LOSE"),
-        ("ETF", "STK.US.MAJOR", "MOST_ACTIVE"),
         ("FUT", "FUT.US", "MOST_ACTIVE"),
         ("CASH", "CASH.IDEALPRO", "MOST_ACTIVE"),
+        ("BOND", "BOND.US", "MOST_ACTIVE"),
     )
 
     def __init__(self, ibkr: Any, config: Any) -> None:
@@ -152,9 +152,9 @@ class DiscoveryEngine:
         """Discover a bounded set of liquid option contracts for already ranked underlyings."""
         if not self.config.asset_options_enabled:
             return []
-        today = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).strftime("%Y%m%d")
         out: list[Instrument] = []
         seen: set[int] = set()
+        today = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).strftime("%Y%m%d")
         for underlying, last_price in underlyings[: self.config.max_option_underlyings]:
             if underlying.asset_class not in {AssetClass.EQUITY, AssetClass.ETF, AssetClass.FUTURES}:
                 continue
@@ -186,7 +186,7 @@ class DiscoveryEngine:
                             query = {
                                 "symbol": underlying.symbol,
                                 "security_type": "FOP" if sec_type == "FUT" else "OPT",
-                                "exchange": "SMART",
+                                "exchange": str(chain.get("exchange") or "SMART"),
                                 "primary_exchange": underlying.contract.primary_exchange,
                                 "currency": underlying.currency,
                                 "trading_class": str(chain.get("trading_class", underlying.contract.trading_class)),
