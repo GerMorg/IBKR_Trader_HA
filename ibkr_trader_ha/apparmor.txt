@@ -1,0 +1,34 @@
+#include <tunables/global>
+
+profile ibkr_trader_ha flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  file,
+  signal (send) set=(kill,term,int,hup,cont),
+
+  /init rix,
+  /bin/** ix,
+  /usr/bin/** ix,
+  /usr/** rix,
+  /lib/** rix,
+  /sbin/** rix,
+  /etc/s6/** rix,
+  /package/** ix,
+  /command/** ix,
+  /usr/lib/bashio/** ix,
+  /run/{s6,s6-rc*,service}/** ix,
+  /etc/services.d/** rwix,
+  /etc/cont-init.d/** rwix,
+  /etc/cont-finish.d/** rwix,
+  /run/** rwk,
+
+  /app/** rix,
+  /data/** rw,
+  /config/** rw,
+  /tmp/** rwk,
+
+  network inet stream,
+  network inet dgram,
+  network inet6 stream,
+  network inet6 dgram,
+}

@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ibkr-trader-ha"
+version = "0.1.0"
+description = "Autonomous Interactive Brokers trading Home Assistant app"
+requires-python = ">=3.12"
+dependencies = [
+  "google-genai==2.28.0",
+  "ibapi-latest==10.51.1",
+  "pydantic==2.13.5",
+  "PyYAML==6.0.3",
+  "defusedxml==0.7.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.1.1",
+  "ruff==0.14.0",
+  "mypy==1.18.2",
+  "bandit==1.8.6",
+  "pip-audit==2.9.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP"]
+ignore = ["E501", "E701", "E702"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.mypy]
+python_version = "3.12"
+check_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+warn_unused_ignores = true
+
+[tool.bandit]
+exclude_dirs = ["tests"]

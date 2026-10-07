@@ -1,0 +1,10 @@
+configuration:
+  ibkr_host: "IBKR Host"
+  ibkr_port: "IBKR Port"
+  ibkr_client_id: "IBKR Client-ID"
+  ibkr_account: "IBKR Konto"
+  trading_mode: "Handelsmodus"
+  trading_enabled: "Handel aktiviert"
+  kill_switch: "Kill Switch"
+  require_what_if: "What-If-Margincheck erforderlich"
+  gemini_api_key: "Gemini API-Schlüssel"
