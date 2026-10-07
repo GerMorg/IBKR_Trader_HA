@@ -31,13 +31,14 @@ def build_runtime(config: Config | None = None) -> Runtime:
         cfg.ibkr_port,
         cfg.ibkr_client_id,
         cfg.ibkr_account,
+        cfg.base_currency,
         cfg.ibkr_connect_timeout_seconds,
         cfg.ibkr_request_timeout_seconds,
     )
     recovery = RecoveryManager(db, audit)
     discovery = DiscoveryEngine(ibkr, cfg)
     market = MarketDataEngine(ibkr, cfg)
-    portfolio = PortfolioEngine("EUR")
+    portfolio = PortfolioEngine(cfg.base_currency)
     strategies = StrategyDispatcher()
     decisions = DecisionEngine()
     risk = RiskEngine(cfg)
