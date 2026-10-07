@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+import time
 from typing import Any
 
 from app.domain.models import Instrument, MarketSnapshot, PortfolioState
@@ -11,24 +12,15 @@ D = Decimal
 
 
 class PortfolioEngine:
-    TAGS = {
-        "equity": "NetLiquidation",
-        "cash": "TotalCashValue",
-        "buying_power": "BuyingPower",
-        "available_funds": "AvailableFunds",
-        "margin_used": "InitMarginReq",
-        "maintenance_margin": "MaintMarginReq",
-    }
-
     def __init__(self, base_currency: str = "EUR") -> None:
-        self.base_currency = base_currency
+        self.base_currency = base_currency.upper()
         self.converter = CurrencyConverter()
 
     @staticmethod
     def _d(value: Any) -> D:
         try:
             return D(str(value))
-        except Exception:
+        except (TypeError, ValueError):
             return D("0")
 
     def build(
@@ -52,29 +44,43 @@ class PortfolioEngine:
         )
         gross = D("0")
         net = D("0")
+        complete = True
+
         for row in raw_positions:
             con_id = int(row.get("con_id", 0) or 0)
             inst = instruments.get(con_id)
             if not inst:
+                complete = False
                 continue
-            qty = self._d(row.get("quantity"))
-            state.positions[con_id] = qty
+
+            quantity = self._d(row.get("quantity"))
+            state.position_quantities[con_id] = quantity
             state.position_currency[con_id] = inst.currency
             state.position_asset_class[con_id] = inst.asset_class
             state.position_sector[con_id] = inst.sector
 
-            snap = snapshots.get(con_id)
-            mark = snap.last if snap and snap.last > 0 else self._d(row.get("average_cost"))
+            snapshot = snapshots.get(con_id)
+            mark = snapshot.last if snapshot and snapshot.last > 0 else self._d(row.get("average_cost"))
+            if snapshot is None or mark <= 0:
+                complete = False
+
             multiplier = inst.contract.multiplier if inst.contract.multiplier > 0 else D("1")
-            local_value = qty * mark * multiplier
+            local_value = quantity * mark * multiplier
             try:
-                value_eur = self.converter.to_base(local_value, inst.currency, self.base_currency, fx_rates)
+                value_base = self.converter.to_base(
+                    local_value, inst.currency, self.base_currency, fx_rates
+                )
             except ValueError:
-                value_eur = local_value if inst.currency.upper() == self.base_currency.upper() else D("0")
-            gross += abs(value_eur)
-            net += value_eur
+                complete = False
+                value_base = D("0")
+
+            state.positions[con_id] = value_base
+            gross += abs(value_base)
+            net += value_base
+
         state.gross_exposure = gross
         state.net_exposure = net
+        state.valuation_complete = complete
         state.peak_equity = max(previous_peak, state.equity)
-        state.source_timestamp = __import__("time").time()
+        state.source_timestamp = time.time()
         return state
