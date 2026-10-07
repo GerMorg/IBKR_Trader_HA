@@ -430,7 +430,8 @@ class IBKRClient:
         self._require()
         req = self._next_req()
         self._history[req] = []
-        what = "MIDPOINT" if str(query.get("security_type", query.get("sec_type", "")) == "CASH" else what_to_show
+        security_type = str(query.get("security_type", query.get("sec_type", ""))).upper()
+        what = "MIDPOINT" if security_type == "CASH" else what_to_show
         try:
             self.app.reqHistoricalData(req, self._make_contract(query), "", duration, bar_size, what, 1 if use_rth else 0, 2, False, [])
             self._wait("history", req)
