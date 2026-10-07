@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from decimal import Decimal, ROUND_DOWN
 from app.domain.models import Decision, OrderIntent, idempotency_key, new_id
-from app.domain.states import DecisionAction, OrderState
+from app.domain.states import OrderState
 
 
 class OrderIntentBuilder:
