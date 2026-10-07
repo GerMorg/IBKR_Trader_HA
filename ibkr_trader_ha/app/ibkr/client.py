@@ -31,6 +31,9 @@ class IBKRClient:
         self.connect_timeout = float(connect_timeout)
         self.request_timeout = float(request_timeout)
         self.app: Any = None
+        self.NativeContract: Any = None
+        self.NativeOrder: Any = None
+        self.ExecutionFilter: Any = None
         self.thread: threading.Thread | None = None
         self._lock = threading.RLock()
         self._req = 1000
@@ -351,7 +354,7 @@ class IBKRClient:
     def account_summary(self) -> dict[str, str]:
         self._require()
         req = self._next_req()
-        self._account.clear()
+        self._account_rows.clear()
         try:
             self.app.reqAccountSummary(
                 req, self.account or "All",
