@@ -53,6 +53,7 @@ class Contract:
     min_size: Decimal = D("0")
     trading_hours: str = ""
     liquid_hours: str = ""
+    time_zone_id: str = "UTC"
     expiry: str = ""
     contract_month: str = ""
     strike: Decimal | None = None
