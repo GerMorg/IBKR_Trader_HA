@@ -143,3 +143,81 @@ class DiscoveryEngine:
             return Decimal(str(value if value not in (None, "") else default))
         except Exception:
             return Decimal(default)
+
+
+    def discover_options(
+        self,
+        underlyings: list[tuple[Instrument, Decimal]],
+    ) -> list[Instrument]:
+        """Discover a bounded set of liquid option contracts for already ranked underlyings."""
+        if not self.config.asset_options_enabled:
+            return []
+        today = __import__("datetime").datetime.now(__import__("datetime").timezone.utc).strftime("%Y%m%d")
+        out: list[Instrument] = []
+        seen: set[int] = set()
+        for underlying, last_price in underlyings[: self.config.max_option_underlyings]:
+            if underlying.asset_class not in {AssetClass.EQUITY, AssetClass.ETF, AssetClass.FUTURES}:
+                continue
+            sec_type = "STK" if underlying.asset_class in {AssetClass.EQUITY, AssetClass.ETF} else "FUT"
+            try:
+                chains = self.ibkr.option_chain(
+                    underlying.contract.con_id, underlying.symbol, sec_type
+                )
+            except Exception as exc:
+                self.last_errors.append(
+                    f"OPTION_CHAIN:{underlying.symbol}:{type(exc).__name__}:{str(exc)[:120]}"
+                )
+                continue
+            for chain in chains:
+                expiries = [
+                    x for x in chain.get("expirations", [])
+                    if str(x) >= today and len(str(x)) == 8 and str(x).isdigit()
+                ]
+                expiries = sorted(expiries)[:2]
+                strikes = sorted(
+                    (Decimal(str(x)) for x in chain.get("strikes", [])),
+                    key=lambda strike: abs(strike - last_price),
+                )[:3]
+                for expiry in expiries:
+                    for strike in strikes:
+                        for right in ("C", "P"):
+                            if len(out) >= self.config.max_option_contracts:
+                                return out
+                            query = {
+                                "symbol": underlying.symbol,
+                                "security_type": "FOP" if sec_type == "FUT" else "OPT",
+                                "exchange": "SMART",
+                                "primary_exchange": underlying.contract.primary_exchange,
+                                "currency": underlying.currency,
+                                "trading_class": str(chain.get("trading_class", underlying.contract.trading_class)),
+                                "contract_month": expiry,
+                                "expiry": expiry,
+                                "strike": strike,
+                                "right": right,
+                                "multiplier": chain.get("multiplier", underlying.contract.multiplier),
+                                "under_con_id": underlying.contract.con_id,
+                            }
+                            try:
+                                details = self.ibkr.contract_details(query)
+                            except Exception as exc:
+                                self.last_errors.append(
+                                    f"OPTION_CONTRACT:{underlying.symbol}:{type(exc).__name__}:{str(exc)[:120]}"
+                                )
+                                continue
+                            if not details:
+                                continue
+                            item = self.map_contract(details[0])
+                            if item.contract.con_id in seen:
+                                continue
+                            seen.add(item.contract.con_id)
+                            out.append(
+                                Instrument(
+                                    item.contract,
+                                    item.asset_class,
+                                    item.capability,
+                                    underlying.sector,
+                                    underlying.industry,
+                                    f"{underlying.description} option",
+                                )
+                            )
+        return out
