@@ -34,7 +34,7 @@ class IBKRClient:
         self.thread: threading.Thread | None = None
         self._lock = threading.RLock()
         self._req = 1000
-        self._order_id = 0
+        self._order_id = -1
         self._connected = threading.Event()
         self._account_rows: dict[str, dict[str, str]] = {}
         self._positions: dict[int, dict[str, Any]] = {}
@@ -318,7 +318,7 @@ class IBKRClient:
         self.thread.start()
         deadline = time.monotonic() + self.connect_timeout
         while time.monotonic() < deadline:
-            if self.app.isConnected() and self._order_id > 0:
+            if self.app.isConnected() and self._order_id >= 0:
                 self.last_heartbeat = time.time()
                 return
             time.sleep(0.1)
@@ -350,8 +350,8 @@ class IBKRClient:
         finally:
             try:
                 self.app.cancelAccountSummary(req)
-            except Exception:
-                pass
+            except Exception as exc:
+                self._errors.append((req, 0, f"cancelAccountSummary:{type(exc).__name__}"))
             self._events.pop(("account", req), None)
 
     def positions(self) -> list[dict[str, Any]]:
@@ -365,8 +365,8 @@ class IBKRClient:
         finally:
             try:
                 self.app.cancelPositions()
-            except Exception:
-                pass
+            except Exception as exc:
+                self._errors.append((req, 0, f"cancelPositions:{type(exc).__name__}"))
             self._events.pop(("positions", req), None)
 
     def open_orders(self) -> list[dict[str, Any]]:
@@ -419,8 +419,8 @@ class IBKRClient:
         finally:
             try:
                 self.app.cancelScannerSubscription(req)
-            except Exception:
-                pass
+            except Exception as exc:
+                self._errors.append((req, 0, f"cancelScannerSubscription:{type(exc).__name__}"))
             self._events.pop(("scanner", req), None)
             self._scans.pop(req, None)
 
@@ -438,8 +438,8 @@ class IBKRClient:
         finally:
             try:
                 self.app.cancelMktData(req)
-            except Exception:
-                pass
+            except Exception as exc:
+                self._errors.append((req, 0, f"cancelMktData:{type(exc).__name__}"))
             self._events.pop(("market", req), None)
             self._market.pop(req, None)
 
