@@ -5,6 +5,7 @@ from typing import Any
 
 from app.domain.models import Decision, MarketSnapshot, PortfolioState, RiskResult
 from app.domain.states import DecisionAction
+from app.market.hours import is_liquid_now
 
 D = Decimal
 
@@ -37,11 +38,29 @@ class RiskEngine:
         eq = portfolio.equity
         is_reduce = decision.reduce_only or decision.action in {DecisionAction.EXIT, DecisionAction.REBALANCE}
 
+        sector_exposure = sum(
+            abs(value) for con_id, value in portfolio.positions.items()
+            if portfolio.position_sector.get(con_id, "") and portfolio.position_sector.get(con_id, "") == instrument.sector
+        )
+        if instrument.sector:
+            sector_exposure += abs(decision.target_position)
+        sector_limit = eq * D(str(self.config.risk_max_sector_exposure_pct)) / D("100") if eq > 0 else D("0")
+
+        currency_exposure = sum(
+            abs(value) for con_id, value in portfolio.positions.items()
+            if portfolio.position_currency.get(con_id, "") == instrument.currency
+        ) + (abs(decision.target_position) if instrument.currency else D("0"))
+        currency_limit = eq * D(str(self.config.risk_max_currency_exposure_pct)) / D("100") if eq > 0 else D("0")
+
+        correlation_proxy = sector_exposure
+        correlation_limit = eq * D(str(self.config.risk_max_correlation_exposure_pct)) / D("100") if eq > 0 else D("0")
+
         checks = {
             "positive_equity": eq > 0,
             "direction_capability": direction_allowed,
             "account_eligible": instrument.capability.account_eligible,
             "tradable_now": instrument.capability.tradable_now,
+            "market_hours": bool(instrument.contract.liquid_hours and is_liquid_now(instrument.contract.liquid_hours, instrument.contract.time_zone_id)) if instrument.contract.liquid_hours else False,
             "market_data": market.age_seconds <= self.config.max_market_data_age_seconds and market.last > 0,
             "spread": market.spread_bps <= D(str(self.config.max_spread_bps)),
             "data_quality": market.bid > 0 and market.ask > 0,
@@ -54,6 +73,9 @@ class RiskEngine:
             "portfolio_valuation": portfolio.valuation_complete or is_reduce,
             "cash_reserve": portfolio.available_funds >= eq * D(str(self.config.risk_cash_reserve_pct)) / D("100") if desired_delta > 0 and not is_reduce else True,
             "open_position_limit": decision.current_position != 0 or len(portfolio.positions) < self.config.risk_max_open_positions,
+            "sector_concentration": sector_exposure <= sector_limit if instrument.sector and eq > 0 else True,
+            "currency_concentration": currency_exposure <= currency_limit if instrument.currency and eq > 0 else True,
+            "correlation_proxy": correlation_proxy <= correlation_limit if instrument.sector and eq > 0 else True,
             "orders_per_day": orders_today < self.config.risk_max_orders_per_day,
             "leverage": decision.leverage <= min(self.SAFETY_MAX_LEVERAGE, D(str(self.config.risk_max_leverage))),
             "edge": is_reduce or decision.signal.net_edge_bps >= D(str(self.config.strategy_min_edge_bps)),
@@ -61,7 +83,11 @@ class RiskEngine:
         }
 
         if short and not decision.reduce_only:
-            shortable = market.shortable_shares is not None and market.shortable_shares > 0
+            shortable = (
+                market.shortable_shares is not None and market.shortable_shares > 0
+            ) or (
+                market.shortability is not None and market.shortability > D("2.5")
+            )
             checks["shortable"] = shortable
 
         if decision.leverage > 1:
