@@ -62,6 +62,7 @@ class MarketDataEngine:
             vega=d("vega") if raw.get("vega") else None,
             rho=d("rho") if raw.get("rho") else None,
             shortable_shares=d("89") if raw.get("89") is not None else None,
+            shortability=d("236") if raw.get("236") is not None else None,
             etf_nav=d("578") if raw.get("578") is not None else None,
         )
         self.cache[instrument.contract.con_id] = (time.time(), snapshot)
