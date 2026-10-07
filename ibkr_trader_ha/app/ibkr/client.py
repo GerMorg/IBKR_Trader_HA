@@ -49,6 +49,7 @@ class IBKRClient:
         self._events: dict[tuple[str, int], threading.Event] = {}
         self._errors: list[tuple[int, int, str]] = []
         self.last_heartbeat = 0.0
+        self._heartbeat_seen = threading.Event()
 
     def _build_app(self) -> Any:
         try:
@@ -74,6 +75,7 @@ class IBKRClient:
 
             def currentTime(self, tm: int) -> None:
                 parent.last_heartbeat = float(tm)
+                parent._heartbeat_seen.set()
 
             def connectionClosed(self) -> None:
                 parent._connected.clear()
@@ -323,6 +325,21 @@ class IBKRClient:
                 return
             time.sleep(0.1)
         raise IBKRUnavailable("IBKR_CONNECT_FAILED")
+
+    def heartbeat(self) -> bool:
+        self._require()
+        self._heartbeat_seen.clear()
+        try:
+            self.app.reqCurrentTime()
+        except Exception as exc:
+            self._errors.append((-1, 0, f"reqCurrentTime:{type(exc).__name__}"))
+            return False
+        if not self._heartbeat_seen.wait(self.request_timeout):
+            return False
+        return True
+
+    def errors(self) -> list[tuple[int, int, str]]:
+        return list(self._errors)
 
     def disconnect(self) -> None:
         if self.app is not None:
